@@ -1,0 +1,74 @@
+---
+- name: Install Docker in Ubuntu
+  hosts: ubuntu_servers
+  become: true
+  tasks:
+
+    - name: Update APT package cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install prerequisites for Docker
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present    
+    
+    - name: Ensure /etc/apt/keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker's official GPG key (asc format)
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Ensure Docker GPG key is readable
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Set Docker architecture fact
+      ansible.builtin.set_fact:
+        docker_arch: >-
+          {% if ansible_architecture == 'x86_64' %}amd64{% elif ansible_architecture == 'aarch64' %}arm64{% else %}{{ ansible_architecture | lower }}{% endif %}
+
+    - name: Add Docker APT repository (official method)
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename | default(ansible_distribution_release) }} stable"
+        state: present
+
+    - name: Update APT package cache after adding Docker repo
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Ensure pip3 is installed
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install Docker Engine
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+    
+    - name: Install docker Python package
+      become: true
+      apt:
+        name: python3-docker
+        state: present
+
+    - name: Ensure Docker service is started and enabled on boot
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true

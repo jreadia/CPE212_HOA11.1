@@ -1,0 +1,39 @@
+---
+- name: Deploy and manage custom web and db container
+  hosts: all
+  become: true
+  vars:
+    container_name: webdb_container
+    image_target: centos   # Change to 'centos' to use CentOS image
+    host_port: 8080
+    db_port: 3307
+  tasks:
+
+    - name: Set image name based on target
+      set_fact:
+        image_name: "webdb-{{ image_target }}"
+
+    - name: Copy Dockerfile to remote host
+      copy:
+        src: ./dockerfile
+        dest: /tmp/dockerfile
+
+    - name: Build custom Docker image
+      community.docker.docker_image:
+        name: "{{ image_name }}"
+        build:
+          path: /tmp
+          dockerfile: dockerfile
+          target: "{{ image_target }}"
+        source: build
+        tag: latest
+
+    - name: Run the custom web and db container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}:latest"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ host_port }}:80"
+          - "{{ db_port }}:3306"

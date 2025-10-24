@@ -1,0 +1,17 @@
+---
+- name: Add Docker Group on Ubuntu and CentOS
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Create docker group if it does not exist
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add current user to docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+        

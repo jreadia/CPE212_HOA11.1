@@ -1,0 +1,6 @@
+[ubuntu_servers]
+localhost ansible_host=localhost ansible_connection=local ansible_user=Adia target_user=Adia
+server1 ansible_host=192.168.56.109 ansible_user=Adia target_user=Adia
+
+[centos_servers]
+server2centOS ansible_host=192.168.56.113 ansible_user=Adia target_user=Adia

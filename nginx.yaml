@@ -1,0 +1,23 @@
+---
+- name: Deploy and manage Nginx container
+  hosts: all
+  become: true
+  vars:
+    container_name: webserver_prod
+    image_name: nginx:latest
+    host_port: 8080
+  tasks:
+
+  - name: Pull the latest Nginx image
+    community.docker.docker_image:
+      name: "{{ image_name }}"
+      source: pull
+
+  - name: Create and run the Nginx container
+    community.docker.docker_container:
+      name: "{{ container_name }}"
+      image: "{{ image_name }}"
+      state: started
+      restart_policy: always
+      ports:
+        - "{{ host_port }}:80"
